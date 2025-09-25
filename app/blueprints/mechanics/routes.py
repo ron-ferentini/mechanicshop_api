@@ -1,0 +1,68 @@
+from .schema import mechanic_schema, mechanics_schema
+from app.models import Mechanic, Service_Ticket, db
+from flask import request, jsonify
+from marshmallow import ValidationError
+from sqlalchemy import select
+from . import mechanics_bp
+
+@mechanics_bp.route('/mechanics', methods=['POST'])
+def create_mechanic():
+    try:
+        mechanic_data = mechanic_schema.load(request.json)
+    except ValidationError as err:
+        return {"errors": err.messages}, 400
+
+    new_mechanic = Mechanic(**mechanic_data)
+    db.session.add(new_mechanic)
+    db.session.commit()
+    return mechanic_schema.jsonify(new_mechanic), 201
+
+@mechanics_bp.route('/mechanics', methods=['GET'])
+def get_mechanics():
+    query = select(Mechanic)
+    mechanics = db.session.execute(query).scalars().all()
+    return mechanics_schema.jsonify(mechanics), 200
+
+@mechanics_bp.route('/mechanics/<int:id>', methods=['GET'])
+def get_mechanic(id):
+    query = select(Mechanic).where(Mechanic.id == id)
+    mechanic = db.session.execute(query).scalars().first()
+    if mechanic is None:
+        return jsonify({"error": "Mechanic not found"}), 404
+    
+    return mechanic_schema.jsonify(mechanic), 200
+
+@mechanics_bp.route('/mechanics/<int:id>', methods=['DELETE'])
+def delete_mechanic(id):
+    query = select(Mechanic).where(Mechanic.id == id)
+    mechanic = db.session.execute(query).scalars().first()
+    if mechanic is None:
+        return jsonify({"error": "Mechanic not found"}), 404
+
+    query = select(Service_Ticket).where(Service_Ticket.mechanic_id == id)
+    service_ticket_exists = db.session.execute(query).scalars().first()
+    if service_ticket_exists:
+        return jsonify({"error": "Cannot delete mechanic with existing service tickets"}), 400
+
+    db.session.delete(mechanic)
+    db.session.commit()
+    
+    return jsonify({"message": "Mechanic deleted"}), 200
+
+@mechanics_bp.route('/mechanics/<int:id>', methods=['PUT'])
+def update_mechanic(id):
+    query = select(Mechanic).where(Mechanic.id == id)
+    mechanic = db.session.execute(query).scalars().first()
+    if mechanic is None:
+        return jsonify({"error": "Mechanic not found"}), 404
+
+    try:
+        mechanic_data = mechanic_schema.load(request.json, partial=True)
+    except ValidationError as err:
+        return {"errors": err.messages}, 400
+
+    for key, value in mechanic_data.items():
+        setattr(mechanic, key, value)
+
+    db.session.commit()
+    return mechanic_schema.jsonify(mechanic), 200
