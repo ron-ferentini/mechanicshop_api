@@ -1,11 +1,37 @@
 from flask import request, jsonify
 from sqlalchemy import select
 from marshmallow import ValidationError
-from .schema import customer_schema, customers_schema
+from ...utils.utils import encode_token, token_required
+from .schema import customer_schema, customers_schema, login_schema
 from .import customers_bp
 from app.models import Service_Ticket, db, Customer
 from app.extensions import limiter, cache
 
+#---------------------- Customer Login ----------------------#    
+@customers_bp.route('/customers/login', methods=['POST'])
+def login():
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    query = select(Customer).where(Customer.email == email)
+    customer = db.session.execute(query).scalars().first()
+    if customer and customer.password == password:
+        auth_token = encode_token(customer.id)
+
+        response = {
+            "status": "success",
+            "message": "Successfully logged in.",
+            "token": auth_token
+        }
+        return jsonify(response), 200
+    else:
+        return jsonify({"message": "Invalid email or password"}), 401
+
+#---------------------- Create Customer with Rate Limiting ----------------------#    
 @customers_bp.route('/customers', methods=['POST'])
 @limiter.limit("5/minute")
 def create_customer():
@@ -20,6 +46,7 @@ def create_customer():
     db.session.commit()
     return customer_schema.jsonify(new_customer), 201
 
+#---------------------- Get All Customers with Caching ----------------------#
 @customers_bp.route('/customers', methods=['GET'])
 @cache.cached(timeout=60, query_string=True)
 def get_customers():
@@ -28,7 +55,9 @@ def get_customers():
     customers = db.session.execute(query).scalars().all()
     return customers_schema.jsonify(customers), 200
 
-@customers_bp.route('/customers/<int:id>', methods=['GET'])
+#---------------------- Get Customer by ID with Authentication ----------------------#
+@customers_bp.route('/customers', methods=['GET'])
+@token_required
 def get_customer(id):
     query = select(Customer).where(Customer.id == id)
     customer = db.session.execute(query).scalars().first()
@@ -37,7 +66,9 @@ def get_customer(id):
     
     return customer_schema.jsonify(customer), 200
 
+#---------------------- Update Customer by ID with Authentication ----------------------#
 @customers_bp.route('/customers/<int:id>', methods=['PUT'])
+@token_required
 def update_customer(id):
     query = select(Customer).where(Customer.id == id)
     customer = db.session.execute(query).scalars().first()
@@ -56,7 +87,9 @@ def update_customer(id):
     except ValidationError as err:
         return {"errors": err.messages}, 400
 
-@customers_bp.route('/customers/<int:id>', methods=['DELETE'])
+#---------------------- Delete Customer by ID with Authentication and Constraint Check ----------------------#
+@customers_bp.route('/customers', methods=['DELETE'])
+@token_required
 def delete_customer(id):
     query = select(Customer).where(Customer.id == id)
     customer = db.session.execute(query).scalars().first()
