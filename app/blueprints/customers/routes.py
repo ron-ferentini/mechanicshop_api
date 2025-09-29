@@ -4,8 +4,10 @@ from marshmallow import ValidationError
 from .schema import customer_schema, customers_schema
 from .import customers_bp
 from app.models import Service_Ticket, db, Customer
+from app.extensions import limiter, cache
 
 @customers_bp.route('/customers', methods=['POST'])
+@limiter.limit("5/minute")
 def create_customer():
    
     try:
@@ -19,6 +21,7 @@ def create_customer():
     return customer_schema.jsonify(new_customer), 201
 
 @customers_bp.route('/customers', methods=['GET'])
+@cache.cached(timeout=60, query_string=True)
 def get_customers():
     
     query = select(Customer)
