@@ -56,7 +56,7 @@
 					"raw": "{\r\n    \"name\": \"John Doe\",\r\n    \"email\": \"john.doe124@gmail.com\",\r\n    \"phone\": \"770-123-9898\"\r\n}\r\n   "
 				},
 				"url": {
-					"raw": "http://127.0.0.1:5000/customers",
+					"raw": "http://127.0.0.1:5000/customers?page=3&per_page=3",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -67,6 +67,16 @@
 					"port": "5000",
 					"path": [
 						"customers"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "3"
+						},
+						{
+							"key": "per_page",
+							"value": "3"
+						}
 					]
 				}
 			},
@@ -453,6 +463,67 @@
 					"path": [
 						"service_tickets",
 						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Edit Service Tickets",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"add_mechanics_id\": [],\r\n    \"remove_mechanics_id\": []\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/service_tickets/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"service_tickets",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search for a Mechanic",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:5000/mechanics/search?name=tim",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"mechanics",
+						"search"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "tim"
+						}
 					]
 				}
 			},
