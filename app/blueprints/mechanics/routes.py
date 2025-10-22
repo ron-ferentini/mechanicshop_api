@@ -40,23 +40,6 @@ def get_mechanic(id):
     
     return mechanic_schema.jsonify(mechanic), 200
 
-@mechanics_bp.route('/mechanics/<int:id>', methods=['DELETE'])
-def delete_mechanic(id):
-    query = select(Mechanic).where(Mechanic.id == id)
-    mechanic = db.session.execute(query).scalars().first()
-    if mechanic is None:
-        return jsonify({"error": "Mechanic not found"}), 404
-
-    query = select(Service_Ticket).where(Service_Ticket.mechanic_id == id)
-    service_ticket_exists = db.session.execute(query).scalars().first()
-    if service_ticket_exists:
-        return jsonify({"error": "Cannot delete mechanic with existing service tickets"}), 400
-
-    db.session.delete(mechanic)
-    db.session.commit()
-    
-    return jsonify({"message": "Mechanic deleted"}), 200
-
 @mechanics_bp.route('/mechanics/<int:id>', methods=['PUT'])
 def update_mechanic(id):
     query = select(Mechanic).where(Mechanic.id == id)
@@ -74,6 +57,23 @@ def update_mechanic(id):
 
     db.session.commit()
     return mechanic_schema.jsonify(mechanic), 200
+
+@mechanics_bp.route('/mechanics/<int:id>', methods=['DELETE'])
+def delete_mechanic(id):
+    query = select(Mechanic).where(Mechanic.id == id)
+    mechanic = db.session.execute(query).scalars().first()
+    if mechanic is None:
+        return jsonify({"error": "Mechanic not found"}), 404
+
+    query = select(Service_Ticket).where(Service_Ticket.mechanic_id == id)
+    service_ticket_exists = db.session.execute(query).scalars().first()
+    if service_ticket_exists:
+        return jsonify({"error": "Cannot delete mechanic with existing service tickets"}), 400
+
+    db.session.delete(mechanic)
+    db.session.commit()
+    
+    return jsonify({"message": "Mechanic deleted"}), 200
 
 @mechanics_bp.route('/mechanics/popular', methods=['GET'])
 def get_popular_mechanics():

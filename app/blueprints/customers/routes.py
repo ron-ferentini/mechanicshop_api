@@ -6,6 +6,7 @@ from .schema import customer_schema, customers_schema, login_schema
 from .import customers_bp
 from app.models import Service_Ticket, db, Customer
 from app.extensions import limiter, cache
+from ...utils.utils import encode_token, token_required
 
 #---------------------- Customer Login ----------------------#    
 @customers_bp.route('/customers/login', methods=['POST'])
@@ -30,6 +31,24 @@ def login():
         return jsonify(response), 200
     else:
         return jsonify({"message": "Invalid email or password"}), 401
+
+#---------------------- Delete Customer by ID with Authentication and Constraint Check ----------------------#
+@customers_bp.route('/customers', methods=['DELETE'])
+@token_required
+def delete_customer(customer_id):
+    query = select(Customer).where(Customer.id == customer_id)
+    customer = db.session.execute(query).scalars().first()
+    if customer is None:
+        return jsonify({"error": "Customer not found"}), 404
+
+    query = select(Service_Ticket).where(Service_Ticket.customer_id == customer_id)
+    service_tickets = db.session.execute(query).scalars().all()
+    if service_tickets:
+        return jsonify({"error": "Cannot delete customer with existing service tickets"}), 400
+
+    db.session.delete(customer)
+    db.session.commit()
+    return jsonify({"message": "Customer deleted"}), 200
 
 #---------------------- Create Customer with Rate Limiting ----------------------#    
 @customers_bp.route('/customers', methods=['POST'])
@@ -95,20 +114,3 @@ def update_customer(id):
     except ValidationError as err:
         return {"errors": err.messages}, 400
 
-#---------------------- Delete Customer by ID with Authentication and Constraint Check ----------------------#
-@customers_bp.route('/customers', methods=['DELETE'])
-@token_required
-def delete_customer(id):
-    query = select(Customer).where(Customer.id == id)
-    customer = db.session.execute(query).scalars().first()
-    if customer is None:
-        return jsonify({"error": "Customer not found"}), 404
-
-    query = select(Service_Ticket).where(Service_Ticket.customer_id == id)
-    service_tickets = db.session.execute(query).scalars().all()
-    if service_tickets:
-        return jsonify({"error": "Cannot delete customer with existing service tickets"}), 400
-
-    db.session.delete(customer)
-    db.session.commit()
-    return jsonify({"message": "Customer deleted"}), 200
