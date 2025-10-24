@@ -6,7 +6,7 @@ from .schema import customer_schema, customers_schema, login_schema
 from .import customers_bp
 from app.models import Service_Ticket, db, Customer
 from app.extensions import limiter, cache
-from ...utils.utils import encode_token, token_required
+from ...utils.utils import encode_customer_token, customer_token_required
 
 #---------------------- Customer Login ----------------------#    
 @customers_bp.route('/customers/login', methods=['POST'])
@@ -21,7 +21,7 @@ def login():
     query = select(Customer).where(Customer.email == email)
     customer = db.session.execute(query).scalars().first()
     if customer and customer.password == password:
-        auth_token = encode_token(customer.id)
+        auth_token = encode_customer_token(customer.id)
 
         response = {
             "status": "success",
@@ -34,7 +34,7 @@ def login():
 
 #---------------------- Delete Customer by ID with Authentication and Constraint Check ----------------------#
 @customers_bp.route('/customers', methods=['DELETE'])
-@token_required
+@customer_token_required
 def delete_customer(customer_id):
     query = select(Customer).where(Customer.id == customer_id)
     customer = db.session.execute(query).scalars().first()
@@ -67,7 +67,7 @@ def create_customer():
 
 #---------------------- Get All Customers with Caching ----------------------#
 @customers_bp.route('/customers', methods=['GET'])
-# @cache.cached(timeout=60, query_string=True)
+@cache.cached(timeout=60, query_string=True)
 def get_customers():
     try:
         page = int(request.args.get('page', 1))
