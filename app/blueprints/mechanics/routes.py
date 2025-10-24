@@ -1,10 +1,35 @@
-from .schema import mechanic_schema, mechanics_schema
+from app.utils.utils import encode_mechanic_token
+from .schema import mechanic_schema, mechanics_schema, login_schema
 from app.models import Mechanic, Service_Ticket, db
 from flask import request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from . import mechanics_bp
 
+#---------------------- Mechanic Login ----------------------#    
+@mechanics_bp.route('/mechanics/login', methods=['POST'])
+def login():
+    try:
+        credentials = login_schema.load(request.json)
+        email = credentials['email']
+        password = credentials['password']
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    query = select(Mechanic).where(Mechanic.email == email)
+    mechanic = db.session.execute(query).scalars().first()
+    if mechanic and mechanic.password == password:
+        auth_token = encode_mechanic_token(mechanic.id)
+
+        response = {
+            "status": "success",
+            "message": "Successfully logged in.",
+            "token": auth_token
+        }
+        return jsonify(response), 200
+    else:
+        return jsonify({"message": "Invalid email or password"}), 401
+    
 @mechanics_bp.route('/mechanics', methods=['POST'])
 def create_mechanic():
     try:
