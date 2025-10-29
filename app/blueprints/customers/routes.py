@@ -1,7 +1,6 @@
 from flask import request, jsonify
 from sqlalchemy import select
 from marshmallow import ValidationError
-from ...utils.utils import encode_token, token_required
 from .schema import customer_schema, customers_schema, login_schema
 from .import customers_bp
 from app.models import Service_Ticket, db, Customer
@@ -84,7 +83,7 @@ def get_customers():
 
 #---------------------- Get Customer by ID with Authentication ----------------------#
 @customers_bp.route('/customers', methods=['GET'])
-@token_required
+@customer_token_required
 def get_customer(id):
     query = select(Customer).where(Customer.id == id)
     customer = db.session.execute(query).scalars().first()
@@ -95,7 +94,7 @@ def get_customer(id):
 
 #---------------------- Update Customer by ID with Authentication ----------------------#
 @customers_bp.route('/customers/<int:id>', methods=['PUT'])
-@token_required
+@customer_token_required
 def update_customer(id):
     query = select(Customer).where(Customer.id == id)
     customer = db.session.execute(query).scalars().first()

@@ -4,6 +4,7 @@ from flask import request, jsonify
 from marshmallow import ValidationError
 from sqlalchemy import select
 from . import service_tickets_bp
+from ...utils.utils import customer_token_required
 
 @service_tickets_bp.route('/service_tickets', methods=['POST'])
 def create_service_ticket():
@@ -73,6 +74,21 @@ def get_service_ticket(id):
         return jsonify({"error": "Service Ticket not found"}), 404
 
     return service_ticket_schema.jsonify(service_ticket), 200
+
+@service_tickets_bp.route('/my-tickets', methods=['GET'])
+@customer_token_required
+def get_my_service_tickets(customer_id):
+    query = select(Customer).where(Customer.id == customer_id)
+    customer = db.session.execute(query).scalars().first()
+    if customer is None:
+        return jsonify({"error": "Customer not found"}), 404
+    
+    query = select(Service_Ticket).where(Service_Ticket.customer_id == customer_id)
+    service_tickets = db.session.execute(query).scalars().all()
+    if not service_tickets:
+        return jsonify({"error": "No service tickets found for this customer"}), 404
+    
+    return service_tickets_schema.jsonify(service_tickets), 200
 
 @service_tickets_bp.route('/service_tickets/<int:ticket_id>', methods=['PUT'])
 def edit_service_ticket(ticket_id):
