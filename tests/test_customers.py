@@ -71,5 +71,16 @@ class TestCustomer(unittest.TestCase):
         headers = {'Authorization': "Bearer " + self.test_login_customer()}
         response = self.client.delete('/customers/', headers=headers)
         self.assertEqual(response.status_code, 200)
+        
+    def test_update_customer(self):
+        headers = {'Authorization': "Bearer " + self.test_login_customer()}
+        update_payload = {
+            "name": "updated_name",
+            "email": "updated_email@email.com",
+            "phone": "770-123-4567",
+            "password": "updated_password"
+        }
 
- 
+        response = self.client.put('/customers/', json=update_payload, headers=headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['name'], "updated_name")
