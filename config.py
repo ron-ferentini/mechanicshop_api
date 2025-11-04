@@ -1,10 +1,12 @@
 class DevelopmentConfig:
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:Yankee%40143@localhost/mechanic_shop'
-    DEBUG = True
+    CACHE_TYPE = "SimpleCache"
     
 class ProductionConfig:
     pass
 
 class TestingConfig:
-    pass
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///testing.db'
+    DEBUG = True
+    CACHE_TYPE = "SimpleCache"
