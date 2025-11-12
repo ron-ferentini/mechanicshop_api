@@ -73,6 +73,17 @@ paths:
           description: "Retrieved Customers Successfully"
           schema:
             $ref: "#/definitions/AllCustomers"
+    get/{customer_id}:
+      tags:
+        - Customers
+      summary: "Returns Customer by ID"
+      description: "Endpoint to retrieve a specific customer by its ID."
+      parameters:
+        - in: "path"
+          name: "customer_id"
+          description: "ID of the customer to retrieve."
+          required: true
+          type: "integer"
     put: 
       tags:
         - Customers
@@ -343,14 +354,48 @@ paths:
               service_description: "Oil Change"
               status: "Open"
               customer_id: 1
+    put/{service_ticket_id}/assign-mechanic/{mechanic_id}:
+      tags:
+        - Service Tickets
+      summary: "Endpoint to update a service ticket."
+      description: "Endpoint to update a service ticket."
+      parameters:
+        - in: "path"
+          name: "service_ticket_id"
+          description: "ID of the service ticket to update."
+          required: true
+          type: "integer"
+          name: "mechanic_id"
+          description: "ID of the mechanic to assign to the service ticket."
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          description: "Information required to update a service ticket."
+          required: true
+          schema:
+            $ref: "#/definitions/CreateServiceTicketPayload"
+      responses:
+        200:
+          descriptions: "Successfully Updated Service Ticket"
+          schema:
+            $ref: "#/definitions/CreateServiceTicketResponse"
+          examples:
+            application/json:
+              id: 1
+              VIN: "1HGCM82633A123456"
+              service_date: "2023-09-15"
+              service_description: "Oil Change and Tire Rotation"
+              status: "In Progress"
+              customer_id: 1
     delete:
       tags:
         - Service Tickets
       summary: "Enpoint to delete a mechanic from a service ticket"
       description: "Endpoint to delete a mechanic from a service ticket."
       parameters:
-        - in: "body"
-          name: "body"
+        - in: "path"
+          name: "path"
           description: "ID of the service ticket to delete."
           required: true
           schema:
@@ -407,6 +452,11 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - in: "path"
+          name: "service_ticket_id"
+          description: "ID of the service ticket to update."
+          required: true
+          type: "integer"
         - in: "body"
           name: "body"
           description: "Information required to update a service ticket."
