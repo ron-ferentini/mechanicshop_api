@@ -1,5 +1,5 @@
 from app import create_app
-from app.models import db, Customer
+from app.models import db, Customer, Service_Ticket
 import unittest
 
 
@@ -57,7 +57,7 @@ class TestCustomer(unittest.TestCase):
         }
 
         response = self.client.post('/customers/login', json=credentials)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json['message'], 'Invalid email or password!')
      
     
@@ -71,7 +71,20 @@ class TestCustomer(unittest.TestCase):
         headers = {'Authorization': "Bearer " + self.test_login_customer()}
         response = self.client.delete('/customers/', headers=headers)
         self.assertEqual(response.status_code, 200)
-        
+
+    def test_delete_customer_with_tickets(self):
+        # Create a service ticket for the customer
+        with self.app.app_context():
+            customer = Customer.query.first()
+            ticket = Service_Ticket(customer_id=customer.id, description="Test Ticket")
+            db.session.add(ticket)
+            db.session.commit()
+
+        headers = {'Authorization': "Bearer " + self.test_login_customer()}
+        response = self.client.delete('/customers/', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['error'], 'Cannot delete customer with existing service tickets')
+    
     def test_update_customer(self):
         headers = {'Authorization': "Bearer " + self.test_login_customer()}
         update_payload = {
