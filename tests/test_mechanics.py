@@ -71,3 +71,5 @@ class TestMechanic(unittest.TestCase):
         self.assertEqual(response.json['email'], 'test@mechanic.com')
         
     
+if __name__ == '__main__':
+    unittest.main()

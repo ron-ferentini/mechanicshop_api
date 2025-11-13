@@ -97,3 +97,6 @@ class TestCustomer(unittest.TestCase):
         response = self.client.put('/customers/', json=update_payload, headers=headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['name'], "updated_name")
+
+if __name__ == '__main__':
+    unittest.main()
